@@ -1,11 +1,16 @@
 from flask import Flask, render_template, request, jsonify
 import joblib
 import numpy as np
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 64 * 1024  # reject oversized request bodies
 
-model = joblib.load('model.pkl')
-vectorizer = joblib.load('vectorizer.pkl')
+# Load model and vectorizer
+model = joblib.load(os.path.join(BASE_DIR, 'model.pkl'))
+vectorizer = joblib.load(os.path.join(BASE_DIR, 'vectorizer.pkl'))
 
 @app.route('/')
 def index():
@@ -13,13 +18,13 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.get_json()
-    message = data.get('message', '').strip()
+    data = request.get_json(silent=True)
+    message = data.get('message') if isinstance(data, dict) else None
 
-    if not message:
+    if not isinstance(message, str) or not message.strip():
         return jsonify({'error': 'No message provided'}), 400
 
-    vec = vectorizer.transform([message])
+    vec = vectorizer.transform([message.strip()])
     prediction = model.predict(vec)[0]
     proba = model.predict_proba(vec)[0]
 

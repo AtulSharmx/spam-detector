@@ -175,7 +175,7 @@
     .stats {
       margin-top: 28px;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
     }
 
@@ -212,6 +212,13 @@
     }
 
     .clear-btn:hover { color: #888; }
+
+    @media (max-width: 480px) {
+      .container { padding: 28px 18px; }
+      .stats { gap: 8px; }
+      .stat { padding: 12px 6px; }
+      .stat-val { font-size: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -223,7 +230,7 @@
       <span class="badge">AICTE · IBM SkillsBuild · ML Internship 2026</span>
     </div>
 
-    <label>Enter a message to analyze</label>
+    <label for="msgInput">Enter a message to analyze</label>
     <textarea id="msgInput" placeholder="e.g. Congratulations! You've won a FREE iPhone. Click here to claim now..."></textarea>
 
     <button class="btn" id="analyzeBtn" onclick="analyze()">🔍 Analyze Message</button>
@@ -241,12 +248,12 @@
 
     <div class="stats">
       <div class="stat">
-        <div class="stat-val">98.03%</div>
+        <div class="stat-val">98.57%</div>
         <div class="stat-label">Accuracy</div>
       </div>
       <div class="stat">
         <div class="stat-val">5,572</div>
-        <div class="stat-label">Trained On</div>
+        <div class="stat-label">Dataset Size</div>
       </div>
       <div class="stat">
         <div class="stat-val">Random Forest</div>
@@ -261,6 +268,7 @@
       if (!msg) { alert('Please enter a message first.'); return; }
 
       const btn = document.getElementById('analyzeBtn');
+      if (btn.disabled) return;
       btn.disabled = true;
       btn.textContent = 'Analyzing...';
 
@@ -270,7 +278,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: msg })
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Server error (${res.status})`);
 
         const resultDiv = document.getElementById('result');
         resultDiv.style.display = 'block';
@@ -286,11 +295,11 @@
         document.getElementById('confidenceText').textContent = `Confidence: ${data.confidence}%`;
 
       } catch (e) {
-        alert('Error analyzing message. Make sure the server is running.');
+        alert(e instanceof TypeError ? 'Error analyzing message. Make sure the server is running.' : e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Analyze Message';
       }
-
-      btn.disabled = false;
-      btn.textContent = '🔍 Analyze Message';
     }
 
     function clearAll() {

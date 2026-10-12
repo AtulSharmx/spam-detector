@@ -13,11 +13,11 @@ This project demonstrates end-to-end machine learning: data preprocessing, featu
 | Metric | Value |
 |--------|-------|
 | Algorithm | Random Forest (100 trees) |
-| Feature Extraction | TF-IDF Vectorizer (5000 features, bigrams) |
+| Feature Extraction | TF-IDF Vectorizer (5000 character 2–5-gram features) |
 | Dataset | UCI SMS Spam Collection (5,572 messages) |
-| Accuracy | **98.03%** |
+| Accuracy | **98.57%** |
 | Precision (Spam) | 100% |
-| Recall (Spam) | 83% |
+| Recall (Spam) | 89% |
 
 ---
 
@@ -32,7 +32,7 @@ This project demonstrates end-to-end machine learning: data preprocessing, featu
 
 ## Tech Stack
 
-- Python 3
+- Python 3.14 (pinned for deployment via `.python-version`)
 - scikit-learn (ML model + TF-IDF)
 - Flask (web server)
 - HTML/CSS/JavaScript (frontend)
@@ -56,6 +56,13 @@ python app.py
 http://localhost:5000
 ```
 
+Run the smoke test with `python test_app.py`.
+
+## Deployment (Render)
+
+`render.yaml` builds with `pip install -r requirements.txt && python train_model.py` and starts with `gunicorn app:app`.
+`.python-version` pins Python 3.14 so every dependency installs from a prebuilt wheel.
+
 ---
 
 ## Project Structure
@@ -68,6 +75,9 @@ spam-detector/
 ├── model.pkl           # Trained Random Forest model
 ├── vectorizer.pkl      # TF-IDF vectorizer
 ├── requirements.txt    # Python dependencies
+├── test_app.py         # Smoke test for the API
+├── render.yaml         # Render deployment config
+├── .python-version     # Python version pin for Render
 ├── README.md           # This file
 └── templates/
     └── index.html      # Web interface
@@ -85,9 +95,9 @@ spam-detector/
 
 ## Features Used
 
-- TF-IDF weighted word and bigram frequencies
-- Top 5,000 most informative features selected
-- English stop words removed
+- TF-IDF weighted character n-grams (2–5 chars, within word boundaries) — robust to SMS slang, typos and obfuscation like "fr33"
+- Top 5,000 most frequent features kept, sublinear term frequency
+- Balanced class weights so the minority spam class isn't under-learned
 
 ---
 
